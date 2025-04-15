@@ -1,0 +1,348 @@
+# -----------------------------------------------------------------------------
+# Workflow Kestra pour le projet P10 (bottleneck_test)
+# Ce workflow couvre tout le processus de téléchargement, traitement,
+# dédoublonnage, fusion, analyse et extraction des rapports finaux.
+# -----------------------------------------------------------------------------
+id: bottleneck_test
+namespace: bottleneck.project
+
+# Description du workflow
+description: >
+  Workflow Kestra pour le projet P10 : téléchargement, traitement des fichiers,
+  dédoublonnage, fusion, analyse et extraction des rapports finaux.
+
+# -----------------------------------------------------------------------------
+# Déclencheur (trigger) pour planifier l'exécution du workflow
+# Le workflow s'exécute tous les 15 du mois à 9h.
+# -----------------------------------------------------------------------------
+triggers:
+  - id: planification_mensuelle
+    type: io.kestra.plugin.core.trigger.Schedule  # Utilisation d'un trigger basé sur une planification (Schedule)
+    cron: "0 9 15 * *"  # Expression cron : exécuter tous les 15 du mois à 9h
+
+# -----------------------------------------------------------------------------
+# Définition des tâches à exécuter
+# Chaque tâche correspond à une étape du processus ETL (Extraction, Transformation, Chargement)
+# -----------------------------------------------------------------------------
+tasks:
+  # ---------------------------------------------------------------------------
+  # Étape 1 : Téléchargement du ZIP
+  # Télécharge l'archive ZIP contenant les fichiers Excel depuis une URL distante.
+  # ---------------------------------------------------------------------------
+  - id: telechargement_zip
+    type: io.kestra.plugin.core.http.Download
+    uri: https://s3.eu-west-1.amazonaws.com/course.oc-static.com/projects/922_Data+Engineer/922_P10/bottleneck.zip
+
+  # ---------------------------------------------------------------------------
+  # Étape 2 : Extraction du ZIP
+  # Décompresse l'archive téléchargée pour extraire les fichiers Excel.
+  # ---------------------------------------------------------------------------
+  - id: extraction_zip
+    type: io.kestra.plugin.compress.ArchiveDecompress
+    algorithm: ZIP  # Format de l'archive : ZIP
+    from: "{{ outputs.telechargement_zip.uri }}"
+    # Utilise l'URI du fichier téléchargé pour l'extraction.
+
+  # ---------------------------------------------------------------------------
+  # Étape 3 : Conversion des fichiers Excel en CSV
+  # Utilise un script Python (exécuté dans un container Docker) pour lire
+  # les fichiers Excel extraits et les convertir en fichiers CSV.
+  # ---------------------------------------------------------------------------
+  - id: conversion_excel_csv
+    type: io.kestra.plugin.scripts.python.Script
+    outputFiles:
+      - "erp.csv"
+      - "web.csv"
+      - "liaison.csv"
+      # Définit les noms des fichiers CSV générés par cette tâche.
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker  # Exécute le script dans un container Docker
+    containerImage: python:3.11  # Utilise l'image Docker Python 3.11
+    beforeCommands:
+      - pip install pandas openpyxl  # Installe les packages nécessaires pour lire et traiter les fichiers Excel
+    script: |
+      import pandas as pd
+      import warnings
+      warnings.filterwarnings("ignore")
+
+      # Lecture des fichiers Excel extraits depuis l'archive ZIP
+      erp = pd.read_excel("{{ outputs.extraction_zip.files['bottleneck/Fichier_erp.xlsx'] }}")
+      web = pd.read_excel("{{ outputs.extraction_zip.files['bottleneck/Fichier_web.xlsx'] }}")
+      liaison = pd.read_excel("{{ outputs.extraction_zip.files['bottleneck/fichier_liaison.xlsx'] }}")
+
+      # Conversion des DataFrames en fichiers CSV, sans inclure les index
+      erp.to_csv("erp.csv", index=False)
+      web.to_csv("web.csv", index=False)
+      liaison.to_csv("liaison.csv", index=False)
+
+  # ---------------------------------------------------------------------------
+  # Étape 4 : Traitement SQL via DuckDB dans un script Python
+  # Utilise DuckDB pour charger les CSV, nettoyer, dédoublonner, fusionner les données
+  # et calculer des indicateurs clés (chiffre d'affaires, résumé statistique).
+  # ---------------------------------------------------------------------------
+  - id: traitement_duckdb_python
+    type: io.kestra.plugin.scripts.python.Script
+    outputFiles:
+      - data.duckdb  # Fichier de base de données DuckDB qui contiendra les résultats du traitement
+    inputFiles:
+      erp.csv: "{{ outputs.conversion_excel_csv.outputFiles['erp.csv'] }}"
+      web.csv: "{{ outputs.conversion_excel_csv.outputFiles['web.csv'] }}"
+      liaison.csv: "{{ outputs.conversion_excel_csv.outputFiles['liaison.csv'] }}"
+      # Association des fichiers CSV générés avec des alias utilisés dans les requêtes SQL.
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: python:3.11
+    beforeCommands:
+      - pip install duckdb pandas  # Installe les packages DuckDB et pandas pour le traitement SQL
+    script: |
+      import duckdb
+
+      # Création d'une base de données locale DuckDB (data.duckdb)
+         
+      try:
+          con = duckdb.connect("data.duckdb")
+      except Exception as e:
+          print("\u26a0\ufe0f Erreur de connexion à DuckDB :", e)
+          exit(1)
+
+      # Chargement des données CSV dans des tables DuckDB
+      con.execute("CREATE TABLE erp AS SELECT * FROM read_csv_auto('erp.csv')")
+      con.execute("CREATE TABLE web AS SELECT * FROM read_csv_auto('web.csv')")
+      con.execute("CREATE TABLE liaison AS SELECT * FROM read_csv_auto('liaison.csv')")
+
+      # Nettoyage des données : suppression des lignes avec des valeurs nulles
+      con.execute("""
+          CREATE TABLE web_clean AS
+          SELECT * FROM web WHERE sku IS NOT NULL
+      """)
+      con.execute("""
+          CREATE TABLE erp_clean AS
+          SELECT * FROM erp
+          WHERE product_id IS NOT NULL AND onsale_web IS NOT NULL AND price IS NOT NULL
+            AND stock_quantity IS NOT NULL AND stock_status IS NOT NULL
+      """)
+      con.execute("""
+          CREATE TABLE liaison_clean AS
+          SELECT * FROM liaison
+          WHERE product_id IS NOT NULL AND id_web IS NOT NULL
+      """)
+
+      # Dédoublonnage des données avec agrégation pour ERP et Liaison,
+      # et suppression des doublons via ROW_NUMBER pour Web
+      con.execute("""
+          CREATE TABLE erp_dedup AS
+          SELECT 
+              product_id,
+              MAX(onsale_web) AS onsale_web,
+              MAX(price) AS price,
+              MAX(stock_quantity) AS stock_quantity,
+              MAX(stock_status) AS stock_status
+          FROM erp_clean
+          GROUP BY product_id
+      """)
+      con.execute("""
+          CREATE TABLE liaison_dedup AS
+          SELECT 
+              product_id,
+              MIN(id_web) AS id_web
+          FROM liaison_clean
+          GROUP BY product_id
+      """)
+      con.execute("""
+          CREATE TABLE web_dedup AS
+          SELECT * FROM (
+              SELECT *, ROW_NUMBER() OVER (PARTITION BY sku ORDER BY post_date DESC) AS rn
+              FROM web_clean
+          ) WHERE rn = 1
+      """)
+
+      # Fusion des tables dédoublonnées via jointure et filtrage sur les stocks > 0 implicite
+      con.execute("""
+          CREATE TABLE fusion AS
+          SELECT
+              e.product_id,
+              e.onsale_web,
+              e.price,
+              e.stock_quantity,
+              e.stock_status,
+              w.post_title,
+              w.post_excerpt,
+              w.post_status,
+              w.post_type,
+              w.average_rating,
+              w.total_sales
+          FROM erp_dedup e
+          JOIN liaison_dedup l ON e.product_id = l.product_id
+          JOIN web_dedup w ON l.id_web = w.sku
+      """)
+
+      # Calcul du chiffre d'affaires (CA) par produit
+      con.execute("""
+          CREATE TABLE ca_par_produit AS
+          SELECT
+              product_id,
+              post_title,
+              price,
+              stock_quantity,
+              ROUND(price * stock_quantity, 2) AS chiffre_affaires
+          FROM fusion
+      """)
+
+      # Calcul du CA total sur l'ensemble des produits
+      con.execute("CREATE TABLE ca_total AS SELECT ROUND(SUM(chiffre_affaires), 2) AS ca_total FROM ca_par_produit")
+
+      # Création d'un résumé global regroupant diverses statistiques
+      con.execute("""
+          CREATE TABLE resume_stats AS SELECT
+              (SELECT COUNT(*) FROM erp) AS nb_erp,
+              (SELECT COUNT(*) FROM erp_clean) AS nb_erp_clean,
+              (SELECT COUNT(*) FROM erp_dedup) AS nb_erp_dedup,
+              (SELECT COUNT(*) FROM web) AS nb_web,
+              (SELECT COUNT(*) FROM web_clean) AS nb_web_clean,
+              (SELECT COUNT(*) FROM web_dedup) AS nb_web_dedup,
+              (SELECT COUNT(*) FROM liaison) AS nb_liaison,
+              (SELECT COUNT(*) FROM liaison_clean) AS nb_liaison_clean,
+              (SELECT COUNT(*) FROM liaison_dedup) AS nb_liaison_dedup,
+              (SELECT COUNT(*) FROM fusion) AS fusion_lignes,
+              (SELECT COUNT(*) FROM ca_par_produit) AS ca_par_produit,
+              (SELECT ca_total FROM ca_total) AS ca_total
+      """)
+
+  # ---------------------------------------------------------------------------
+  # Étape 5 : Analyse statistique (Calcul du Z-score) et export des rapports
+  # Analyse la fusion des données pour déterminer les produits premium et ordinaires
+  # (en fonction du Z-score de la colonne "price") et exporte les résultats.
+  # ---------------------------------------------------------------------------
+  - id: analyse_zscore
+    type: io.kestra.plugin.scripts.python.Script
+    inputFiles:
+      data.duckdb: "{{ outputs.traitement_duckdb_python.outputFiles['data.duckdb'] }}"
+      # Fichier DuckDB contenant toutes les données traitées
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: python:3.11
+    beforeCommands:
+      - pip install duckdb pandas openpyxl  # Installation des packages nécessaires pour l'analyse statistique et l'export des fichiers
+    outputFiles:
+      - vins_premium.csv         # Export des produits classés comme premium (Z-score > 2)
+      - vins_ordinaires.csv       # Export des produits ordinaires (Z-score <= 2)
+      - ca_par_produit.xlsx       # Export du CA par produit en format Excel
+    script: |
+      import duckdb
+      import pandas as pd
+
+      # Connexion à la base de données DuckDB (data.duckdb)
+
+      try:
+          con = duckdb.connect("data.duckdb")
+      except Exception as e:
+          print("⚠️ Erreur de connexion à DuckDB :", e)
+          exit(1)
+
+      # Récupération des données fusionnées
+      df = con.execute("SELECT product_id, post_title, price, stock_quantity, ROUND(price * stock_quantity, 2) AS chiffre_affaires FROM fusion").fetchdf()
+      
+      # Calcul du Z-score pour la colonne "price"
+      df['z_score'] = (df['price'] - df['price'].mean()) / df['price'].std()
+
+      # Séparation des produits en deux groupes selon le Z-score
+      premium = df[df['z_score'] > 2]
+      ordinaires = df[df['z_score'] <= 2]
+
+      # Export des résultats aux formats CSV et Excel
+      premium.to_csv("vins_premium.csv", index=False)
+      ordinaires.to_csv("vins_ordinaires.csv", index=False)
+      df.to_excel("ca_par_produit.xlsx", index=False)
+
+  # ---------------------------------------------------------------------------
+  # Étape 6 : Journalisation détaillée du rapport de progression
+  # Affiche un résumé complet des statistiques de traitement,
+  # inclut des assertions pour valider les résultats et propose un affichage amélioré.
+  # ---------------------------------------------------------------------------
+  - id: log_rapport
+    type: io.kestra.plugin.scripts.python.Script
+    inputFiles:
+      data.duckdb: "{{ outputs.traitement_duckdb_python.outputFiles['data.duckdb'] }}"
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: python:3.11
+    beforeCommands:
+      - pip install duckdb pandas  # Installation de DuckDB et Pandas pour récupérer et afficher les statistiques
+    script: |
+      import duckdb
+      import pandas as pd
+
+      # Connexion à la base DuckDB pour récupérer les statistiques de traitement
+
+      try:
+          con = duckdb.connect("data.duckdb")
+      except Exception as e:
+          print("⚠️ Erreur de connexion à DuckDB :", e)
+          exit(1)
+
+      df = con.execute("SELECT * FROM resume_stats").fetchdf()
+
+      # -------------------
+      # TESTS DE VALIDATION
+      # -------------------
+      # Vérification des comptages et cohérence des données
+      assert df['nb_erp'][0] == 825, f"❌ ERP brut incorrect : {df['nb_erp'][0]} lignes (attendu : 825)"
+      assert df['nb_erp_clean'][0] == 825, f"❌ ERP nettoyé incorrect : {df['nb_erp_clean'][0]} lignes (attendu : 825)"
+      assert df['nb_erp_dedup'][0] == 825, f"❌ ERP dédoublonné incorrect : {df['nb_erp_dedup'][0]} lignes (attendu : 825)"
+      assert df['nb_web'][0] == 1513, f"❌ Web brut incorrect : {df['nb_web'][0]} lignes (attendu : 1513)"
+      assert df['nb_web_clean'][0] == 1428, f"❌ Web nettoyé incorrect : {df['nb_web_clean'][0]} lignes (attendu : 1428)"
+      assert df['nb_web_dedup'][0] == 714, f"❌ Web dédoublonné incorrect : {df['nb_web_dedup'][0]} lignes (attendu : 714)"
+      assert df['nb_liaison'][0] == 825, f"❌ Liaison brut incorrect : {df['nb_liaison'][0]} lignes (attendu : 825)"
+      assert df['nb_liaison_clean'][0] == 734, f"❌ Liaison nettoyée incorrecte : {df['nb_liaison_clean'][0]} lignes (attendu : 734)"
+      assert df['nb_liaison_dedup'][0] == 734, f"❌ Liaison dédoublonnée incorrecte : {df['nb_liaison_dedup'][0]} lignes (attendu : 734)"
+      assert df['fusion_lignes'][0] == 714, f"❌ Fusion incorrecte : {df['fusion_lignes'][0]} lignes (attendu : 714)"
+      assert df['ca_par_produit'][0] == 714, f"❌ CA par produit incorrect : {df['ca_par_produit'][0]} lignes (attendu : 714)"
+      assert abs(df['ca_total'][0] - 388287.50) < 0.01, f"❌ CA total incorrect : {df['ca_total'][0]:,.2f} € (attendu : 388287.50 €)"
+
+      # Test Z-score : vérifier que 30 vins sont détectés comme premium (Z-score > 2)
+      df_premium = con.execute("""
+        SELECT COUNT(*) AS nb_premium FROM (
+          SELECT price, (price - AVG(price) OVER()) / STDDEV_SAMP(price) OVER() AS z_score
+          FROM fusion
+        )
+        WHERE z_score > 2
+      """).fetchdf()
+      assert df_premium['nb_premium'][0] == 30, f"❌ Z-score incorrect : {df_premium['nb_premium'][0]} vins premium (attendu : 30)"
+
+      # Test de valeurs nulles dans la table fusion
+      df_nulls = con.execute("""
+        SELECT COUNT(*) AS nb_nulls
+        FROM fusion
+        WHERE product_id IS NULL OR price IS NULL OR stock_quantity IS NULL
+              OR post_title IS NULL OR average_rating IS NULL OR total_sales IS NULL
+      """).fetchdf()
+      assert df_nulls['nb_nulls'][0] == 0, f"❌ Valeurs nulles restantes dans 'fusion' : {df_nulls['nb_nulls'][0]}"
+
+      # ----------------------
+      # AFFICHAGE DU RAPPORT FINAL
+      # ----------------------
+      print("================ RÉCAPITULATIF FINAL DU TRAITEMENT ================")
+      print("Détail par étape :")
+      print("-------------------------------------------------------------------")
+      print(f"Lignes ERP (brutes)                  : {df['nb_erp'][0]}")
+      print(f"Lignes ERP (nettoyées)               : {df['nb_erp_clean'][0]}")
+      print(f"Lignes ERP (dédoublonnées)           : {df['nb_erp_dedup'][0]}")
+      print(f"Lignes Web (brutes)                  : {df['nb_web'][0]}")
+      print(f"Lignes Web (nettoyées)               : {df['nb_web_clean'][0]}")
+      print(f"Lignes Web (dédoublonnées)           : {df['nb_web_dedup'][0]}")
+      print(f"Lignes Liaison (brutes)              : {df['nb_liaison'][0]}")
+      print(f"Lignes Liaison (nettoyées)           : {df['nb_liaison_clean'][0]}")
+      print(f"Lignes Liaison (dédoublonnées)       : {df['nb_liaison_dedup'][0]}")
+      print(f"Produits fusionnés (total)           : {df['fusion_lignes'][0]}")
+      print(f"Chiffre d'affaires par produit       : {df['ca_par_produit'][0]}")
+      print(f"Chiffre d'affaires total             : {df['ca_total'][0]:,.2f} €")
+      print(f"Vins premium détectés (Z > 2)          : {df_premium['nb_premium'][0]}")
+      print("-------------------------------------------------------------------")
+      print("Résumé global :")
+      print(f"  ERP       : {df['nb_erp'][0]} lignes (nettoyées: {df['nb_erp_clean'][0]}, dédoublonnées: {df['nb_erp_dedup'][0]})")
+      print(f"  Web       : {df['nb_web'][0]} lignes (nettoyées: {df['nb_web_clean'][0]}, dédoublonnées: {df['nb_web_dedup'][0]})")
+      print(f"  Liaison  : {df['nb_liaison'][0]} lignes (nettoyées: {df['nb_liaison_clean'][0]}, dédoublonnées: {df['nb_liaison_dedup'][0]})")
+      print(f"  Fusion    : {df['fusion_lignes'][0]} lignes")
+      print(f"  CA Total  : {df['ca_total'][0]:,.2f} €")
+      print("===================================================================")
+      print("✅ Tous les tests de cohérence, de jointure et statistiques sont validés avec succès !")

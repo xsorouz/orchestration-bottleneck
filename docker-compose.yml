@@ -1,0 +1,83 @@
+# ========================
+# Définition des volumes persistants
+# ========================
+volumes:
+  postgres-data:
+    driver: local  # Utilise le driver local pour stocker et persister les données de PostgreSQL sur le système hôte.
+  kestra-data:
+    driver: local  # Utilise le driver local pour stocker et persister les données de Kestra.
+
+# ========================
+# Définition des services (containers) à déployer
+# ========================
+services:
+  postgres:  # Service pour la base de données PostgreSQL
+    image: postgres  # Utilise l'image officielle de PostgreSQL.
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data  
+      # Monte le volume 'postgres-data' à l'intérieur du container pour y stocker les données
+      # de PostgreSQL dans le répertoire /var/lib/postgresql/data.
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}         # Nom de la base de données (défini dans les variables d'environnement).
+      POSTGRES_USER: ${POSTGRES_USER}     # Nom d'utilisateur pour PostgreSQL (défini dans les variables d'environnement).
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # Mot de passe pour l'utilisateur PostgreSQL (défini dans les variables d'environnement).
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      # Utilise la commande pg_isready pour vérifier que PostgreSQL est prêt à accepter des connexions.
+      interval: 30s   # Effectue un test de santé toutes les 30 secondes.
+      timeout: 10s    # Chaque test a une durée maximale de 10 secondes.
+      retries: 10     # Si le test échoue, il sera retenté 10 fois avant de déclarer le service défaillant.
+
+  kestra:  # Service pour l'application Kestra
+    image: kestra/kestra:latest  # Utilise la dernière version de l'image Kestra depuis Docker Hub.
+    pull_policy: always  # Force Docker à toujours récupérer la dernière version de l'image lors du déploiement.
+    restart: unless-stopped
+    user: "root"  # Exécute le container avec l'utilisateur root (nécessaire pour certaines opérations).
+    command: server standalone  # Démarre Kestra en mode "server standalone".
+    volumes:
+      - kestra-data:/app/storage  
+      # Monte le volume 'kestra-data' dans le container à l'emplacement /app/storage
+      # pour assurer la persistance des fichiers de stockage de Kestra.
+      - /var/run/docker.sock:/var/run/docker.sock  
+      # Monte le socket Docker de l'hôte pour permettre à Kestra d'interagir avec Docker.
+      - /tmp/kestra-wd:/tmp/kestra-wd  
+      # Monte un répertoire temporaire pour les fichiers de travail (working directory) de Kestra.
+    environment:
+      # Configure Kestra via une variable d'environnement multi-lignes.
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+            # URL de connexion JDBC pointant vers le service 'postgres' sur le port 5432.
+            driverClassName: org.postgresql.Driver  # Spécifie la classe du driver PostgreSQL.
+            username: ${POSTGRES_USER}               # Utilise le nom d'utilisateur PostgreSQL défini.
+            password: ${POSTGRES_PASSWORD}           # Utilise le mot de passe PostgreSQL défini.
+        kestra:
+          server:
+            basicAuth:
+              enabled: ${KESTRA_BASIC_AUTH}          # Active ou désactive l'authentification basique (true/false).
+              username: "${KESTRA_USERNAME}"         # Nom d'utilisateur pour l'authentification basique de Kestra.
+              password: ${KESTRA_PASSWORD}           # Mot de passe associé à cet utilisateur.
+          repository:
+            type: postgres  # Indique que Kestra utilisera PostgreSQL pour stocker ses données de dépôt (repository).
+          storage:
+            type: local  # Définit le stockage des données en mode local.
+            local:
+              basePath: "/app/storage"  # Chemin de base pour le stockage local dans le container.
+          queue:
+            type: postgres  # Utilise PostgreSQL pour la gestion de la file d'attente (queue) des tâches.
+          tasks:
+            tmpDir:
+              path: /tmp/kestra-wd/tmp  # Chemin du répertoire temporaire utilisé par Kestra pour traiter les tâches.
+          url: http://localhost:8080/  # URL d'accès à l'interface web de Kestra.
+      KESTRA_PLUGINS: |
+        - io.kestra.plugin.scripts.exec
+    ports:
+      - "8080:8080"  # Expose le port 8080 du container sur le port 8080 de l'hôte (accès à l'interface web).
+      - "8081:8081"  # Expose également le port 8081 pour d'éventuels services complémentaires ou APIs.
+    depends_on:
+      postgres:
+        condition: service_started  
+        # Indique que le service Kestra ne démarrera que lorsque le service PostgreSQL
+        # aura démarré et sera prêt, assurant ainsi une dépendance correcte entre les services.
