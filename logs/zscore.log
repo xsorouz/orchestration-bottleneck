@@ -1,9 +1,0 @@
-2025-04-17 11:06:40.754 | INFO     | __main__:<module>:23 - 🦆 Connexion à DuckDB établie.
-2025-04-17 11:06:40.758 | INFO     | __main__:<module>:43 - 🍷 Vins millésimés détectés (z > 2) : 27 (attendu : 30)
-2025-04-17 11:06:40.758 | INFO     | __main__:<module>:44 - 📦 Vins ordinaires : 546
-2025-04-17 11:06:40.781 | SUCCESS  | __main__:<module>:54 - 📁 Fichiers exportés : vins_millesimes.csv, vins_ordinaires.csv
-2025-04-17 11:12:15.524 | INFO     | __main__:<module>:23 - 🦆 Connexion à DuckDB établie.
-2025-04-17 11:12:15.530 | INFO     | __main__:<module>:47 - 🍷 Vins millésimés détectés (z > 2) : 30 (attendu : 30)
-2025-04-17 11:12:15.530 | INFO     | __main__:<module>:48 - 📦 Vins ordinaires : 684
-2025-04-17 11:12:15.552 | SUCCESS  | __main__:<module>:58 - 📁 Export : vins_millesimes.csv & vins_ordinaires.csv
-2025-04-17 11:12:15.552 | SUCCESS  | __main__:<module>:71 - 🧪 Tests de cohérence Z-score validés ✅
