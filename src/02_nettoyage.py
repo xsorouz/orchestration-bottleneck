@@ -93,12 +93,12 @@ except Exception as e:
 # Connexion à DuckDB et nettoyage métier (sans filtre `stock_status`)
 # ------------------------------------------------------------------------------
 try:
-    con = duckdb.connect("data.duckdb")
-    logger.info("🦆 Connexion à DuckDB établie.")
+    Path("data").mkdir(exist_ok=True)  # S'assurer que le dossier "data" existe
+    con = duckdb.connect("data/bottleneck.duckdb")
+    logger.info("🦆 Connexion à DuckDB établie dans le dossier 'data'.")
 except Exception as e:
     logger.error(f"❌ Connexion à DuckDB échouée : {e}")
     exit(1)
-
 try:
     # Nettoyage ERP : filtre sur product_id, onsale_web, price > 0, stock_quantity présent
     con.execute("""

@@ -8,6 +8,8 @@ from loguru import logger               # Logger simple à configurer et riche e
 
 import sys
 
+import warnings
+warnings.filterwarnings("ignore")
 
 logger.remove()
 logger.add(sys.stdout, level="INFO", filter=lambda record: record["level"].name == "INFO")

@@ -41,15 +41,13 @@ OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 # ==============================================================================
 # 🔌 CONNEXION À LA BASE DUCKDB
 # ==============================================================================
-
 try:
-    con = duckdb.connect("data.duckdb")
-    logger.info("🦆 Connexion à DuckDB établie.")
+    Path("data").mkdir(exist_ok=True)  # S'assurer que le dossier "data" existe
+    con = duckdb.connect("data/bottleneck.duckdb")
+    logger.info("🦆 Connexion à DuckDB établie dans le dossier 'data'.")
 except Exception as e:
-    logger.error(f"❌ Connexion échouée : {e}")
+    logger.error(f"❌ Connexion à DuckDB échouée : {e}")
     exit(1)
-
-
 # ==============================================================================
 # 📊 CHARGEMENT DES DONNÉES & CALCUL DU Z-SCORE
 # ==============================================================================

@@ -35,10 +35,11 @@ OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 # - Ouvre ou crée la base de données "data.duckdb"
 # ------------------------------------------------------------------------------
 try:
-    con = duckdb.connect("data.duckdb")
-    logger.info("🦆 Connexion à DuckDB établie.")
+    Path("data").mkdir(exist_ok=True)  # S'assurer que le dossier "data" existe
+    con = duckdb.connect("data/bottleneck.duckdb")
+    logger.info("🦆 Connexion à DuckDB établie dans le dossier 'data'.")
 except Exception as e:
-    logger.error(f"❌ Erreur de connexion à DuckDB : {e}")
+    logger.error(f"❌ Connexion à DuckDB échouée : {e}")
     exit(1)
 
 # ------------------------------------------------------------------------------
