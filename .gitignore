@@ -17,8 +17,7 @@ venv/
 env/
 
 # 📁 Exports locaux (données générées)
-outputs/
-data/
+
 docs/
 old/
 
