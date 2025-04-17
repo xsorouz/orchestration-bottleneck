@@ -6,6 +6,10 @@ import pandas as pd                     # Pandas pour la manipulation des DataFr
 from pathlib import Path                # Gestion portable des chemins de fichiers
 from loguru import logger               # Logger simple à configurer et riche en fonctionnalités
 
+logger.remove()
+logger.add(sys.stdout, level="INFO", filter=lambda record: record["level"].name == "INFO")
+logger.add(sys.stderr, level="WARNING")  # warnings, errors et criticals
+
 # ------------------------------------------------------------------------------
 # Configuration des logs
 # - Création du dossier de logs s'il n'existe pas

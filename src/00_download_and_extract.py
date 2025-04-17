@@ -9,6 +9,11 @@ from io import BytesIO                  # Permet de traiter un flux d'octets en 
 from pathlib import Path                # Gestion portable des chemins de fichiers
 from loguru import logger                # Logger performant pour tracer les événements et erreurs
 
+logger.remove()
+logger.add(sys.stdout, level="INFO", filter=lambda record: record["level"].name == "INFO")
+logger.add(sys.stderr, level="WARNING")  # warnings, errors et criticals
+
+
 # ------------------------------------------------------------------------------
 # Configuration des logs
 # - Crée le dossier de logs
