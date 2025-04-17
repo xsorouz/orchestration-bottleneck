@@ -1,0 +1,64 @@
+2025-04-17 11:16:49.680 | INFO     | __main__:<module>:20 - 🦆 Connexion à DuckDB établie pour rapport final.
+2025-04-17 11:16:49.680 | INFO     | __main__:<module>:42 - ================ RÉCAPITULATIF FINAL DU TRAITEMENT ================
+2025-04-17 11:16:49.680 | ERROR    | __main__:<module>:47 - ❌ ERP dédoublonné = 825
+2025-04-17 11:16:49.680 | ERROR    | __main__:<module>:47 - ❌ Liaison dédoublonné = 825
+2025-04-17 11:16:49.680 | SUCCESS  | __main__:<module>:45 - ✅ Web nettoyé = 1428
+2025-04-17 11:16:49.680 | SUCCESS  | __main__:<module>:45 - ✅ Web dédoublonné = 714
+2025-04-17 11:16:49.680 | SUCCESS  | __main__:<module>:45 - ✅ Fusion = 714
+2025-04-17 11:16:49.680 | SUCCESS  | __main__:<module>:45 - ✅ CA total = 387837.60
+2025-04-17 11:16:49.696 | SUCCESS  | __main__:<module>:45 - ✅ Vins millésimés = 30
+2025-04-17 11:16:49.696 | INFO     | __main__:<module>:48 - ===================================================================
+2025-04-17 11:16:49.696 | ERROR    | __main__:<module>:55 - ❌ Rapport de validation échoué : ❌ Un ou plusieurs tests n'ont pas été validés.
+2025-04-17 11:26:22.579 | INFO     | __main__:<module>:20 - 🦆 Connexion à DuckDB établie pour rapport final.
+2025-04-17 11:26:22.579 | INFO     | __main__:<module>:42 - ================ RÉCAPITULATIF FINAL DU TRAITEMENT ================
+2025-04-17 11:26:22.579 | ERROR    | __main__:<module>:47 - ❌ ERP dédoublonné = 825
+2025-04-17 11:26:22.579 | ERROR    | __main__:<module>:47 - ❌ Liaison dédoublonné = 825
+2025-04-17 11:26:22.579 | SUCCESS  | __main__:<module>:45 - ✅ Web nettoyé = 1428
+2025-04-17 11:26:22.579 | SUCCESS  | __main__:<module>:45 - ✅ Web dédoublonné = 714
+2025-04-17 11:26:22.579 | SUCCESS  | __main__:<module>:45 - ✅ Fusion = 714
+2025-04-17 11:26:22.579 | SUCCESS  | __main__:<module>:45 - ✅ CA total = 387837.60
+2025-04-17 11:26:22.579 | SUCCESS  | __main__:<module>:45 - ✅ Vins millésimés = 30
+2025-04-17 11:26:22.579 | INFO     | __main__:<module>:48 - ===================================================================
+2025-04-17 11:26:22.579 | ERROR    | __main__:<module>:55 - ❌ Rapport de validation échoué : ❌ Un ou plusieurs tests n'ont pas été validés.
+2025-04-17 11:27:08.334 | INFO     | __main__:<module>:20 - 🦆 Connexion à DuckDB établie pour rapport final.
+2025-04-17 11:27:08.334 | INFO     | __main__:<module>:42 - ================ RÉCAPITULATIF FINAL DU TRAITEMENT ================
+2025-04-17 11:27:08.334 | ERROR    | __main__:<module>:47 - ❌ ERP dédoublonné = 825
+2025-04-17 11:27:08.334 | ERROR    | __main__:<module>:47 - ❌ Liaison dédoublonné = 825
+2025-04-17 11:27:08.334 | SUCCESS  | __main__:<module>:45 - ✅ Web nettoyé = 1428
+2025-04-17 11:27:08.334 | SUCCESS  | __main__:<module>:45 - ✅ Web dédoublonné = 714
+2025-04-17 11:27:08.334 | SUCCESS  | __main__:<module>:45 - ✅ Fusion = 714
+2025-04-17 11:27:08.334 | SUCCESS  | __main__:<module>:45 - ✅ CA total = 387837.60
+2025-04-17 11:27:08.334 | SUCCESS  | __main__:<module>:45 - ✅ Vins millésimés = 30
+2025-04-17 11:27:08.334 | INFO     | __main__:<module>:48 - ===================================================================
+2025-04-17 11:27:08.334 | ERROR    | __main__:<module>:55 - ❌ Rapport de validation échoué : ❌ Un ou plusieurs tests n'ont pas été validés.
+2025-04-17 11:27:55.852 | INFO     | __main__:<module>:20 - 🦆 Connexion à DuckDB établie pour le rapport final.
+2025-04-17 11:27:55.852 | INFO     | __main__:<module>:25 - 📋 Chargement des données initiales et résumé complet...
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:75 - 
+===================== 🧾 RAPPORT FINAL DU PIPELINE =====================
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:78 - 📂 Données brutes chargées :
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:80 -   - ERP (brut) : 825 lignes
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:80 -   - Web (brut) : 1513 lignes
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:80 -   - Liaison (brut) : 825 lignes
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:83 - 🧹 Après nettoyage (valeurs nulles supprimées) :
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:85 -   - ERP (nettoyé) : 823 lignes
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:85 -   - Web (nettoyé) : 1428 lignes
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:85 -   - Liaison (nettoyé) : 734 lignes
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:88 - 🧼 Après dédoublonnage :
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:89 -   - ERP : agrégation GROUP BY product_id (max sur colonnes)
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:90 -   - Web : suppression des doublons via ROW_NUMBER() sur sku (le + récent)
+2025-04-17 11:27:55.873 | INFO     | __main__:<module>:91 -   - Liaison : GROUP BY product_id (id_web conservé = min)
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:93 -   - ERP (dédoublonné) : 823 lignes
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:93 -   - Web (dédoublonné) : 714 lignes
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:93 -   - Liaison (dédoublonné) : 734 lignes
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:96 - 🔗 Fusion finale des sources :
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:97 -   - Jointure ERP + Liaison via product_id
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:98 -   - Puis jointure Liaison + Web via id_web = sku
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:99 -   - Nombre de produits fusionnés : 714 lignes (attendu : 714)
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:102 - 💰 Chiffre d'affaires calculé sur produits vendables (stock > 0 et instock) :
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:103 -   - Produits comptabilisés : 573
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:104 -   - CA total : 387,837.60 € (attendu dans projet : 70 568.60 €)
+2025-04-17 11:27:55.874 | WARNING  | __main__:<module>:106 - ⚠️ Le CA diffère du projet car les fichiers sources incluent des produits plus chers ou plus en stock.
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:109 - 🍷 Analyse des vins millésimés :
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:110 -   - Vins détectés (Z-score > 2) : 30 (attendu : 30)
+2025-04-17 11:27:55.874 | INFO     | __main__:<module>:112 - =========================================================================
+2025-04-17 11:27:55.874 | SUCCESS  | __main__:<module>:113 - 🎉 Tous les résultats ont été vérifiés et consignés avec explication.

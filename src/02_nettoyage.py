@@ -62,8 +62,8 @@ try:
     cols_to_check = [col for col in df_web.columns if col not in ignored_cols + ["sku"]]
     df_web_partial = df_web_sku_null[df_web_sku_null[cols_to_check].notnull().any(axis=1)]
 
-    logger.warning(f"WEB - {len(df_web_sku_null)} lignes avec sku NULL")
-    logger.warning(f"WEB - {len(df_web_partial)} lignes avec sku NULL mais données partiellement présentes")
+    logger.info(f"WEB - {len(df_web_sku_null)} lignes avec sku NULL")
+    logger.info(f"WEB - {len(df_web_partial)} lignes avec sku NULL mais données partiellement présentes")
 
     # Exemples de lignes partielles (niveau debug)
     if len(df_web_partial) > 0:
@@ -73,11 +73,11 @@ try:
     # Analyse métier ERP : exclusion des lignes où price ≤ 0
     df_erp_exclu = df_erp[df_erp["price"] <= 0]
     exclu_price = len(df_erp_exclu)
-    logger.warning(f"ERP - {exclu_price} lignes exclues car price ≤ 0")
+    logger.info(f"ERP - {exclu_price} lignes exclues car price ≤ 0")
 
     # Analyse métier LIAISON : exclusion des lignes id_web NULL
     df_liaison_exclu = df_liaison[df_liaison["id_web"].isnull()]
-    logger.warning(f"LIAISON - {len(df_liaison_exclu)} lignes exclues car id_web NULL")
+    logger.info(f"LIAISON - {len(df_liaison_exclu)} lignes exclues car id_web NULL")
 
     # Export des lignes exclues pour audit
     df_erp_exclu.to_csv(OUTPUT_DIR / "erp_exclu.csv", index=False)

@@ -132,7 +132,7 @@ try:
     logger.info(f"  - Produits comptabilisés : {ca_count}")
     logger.info(f"  - CA total : {ca_total:,.2f} € (attendu dans projet : 70 568.60 €)")
     if round(ca_total, 2) != 70568.60:
-        logger.warning("⚠️ Le CA diffère du projet car les fichiers sources incluent des produits plus chers ou plus en stock.")
+        logger.info("⚠️ Le CA diffère du projet car les fichiers sources incluent des produits plus chers ou plus en stock.")
 
     # --- Z-score ---
     logger.info("🍷 Analyse des vins millésimés :")

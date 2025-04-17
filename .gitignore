@@ -19,8 +19,6 @@ env/
 # 📁 Exports locaux (données générées)
 outputs/
 data/
-logs/
-*.log
 docs/
 old/
 

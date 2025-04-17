@@ -1,0 +1,66 @@
+2025-04-17 10:29:42.451 | INFO     | __main__:<module>:32 - 🦆 Connexion à DuckDB établie.
+2025-04-17 10:29:42.468 | SUCCESS  | __main__:<module>:55 - ✅ Table ca_par_produit créée.
+2025-04-17 10:29:42.470 | SUCCESS  | __main__:<module>:64 - ✅ Table ca_total créée.
+2025-04-17 10:29:42.474 | INFO     | __main__:<module>:85 - 💰 Chiffre d'affaires total : 388,332.00 €
+2025-04-17 10:29:42.478 | INFO     | __main__:<module>:86 - 📦 Nombre de produits comptabilisés : 574
+2025-04-17 10:29:42.641 | SUCCESS  | __main__:<module>:97 - 📁 Fichiers CA exportés : CSV + Excel
+2025-04-17 10:31:36.205 | INFO     | __main__:<module>:32 - 🦆 Connexion à DuckDB établie.
+2025-04-17 10:31:36.221 | SUCCESS  | __main__:<module>:55 - ✅ Table ca_par_produit créée.
+2025-04-17 10:31:36.221 | SUCCESS  | __main__:<module>:64 - ✅ Table ca_total créée.
+2025-04-17 10:31:36.221 | INFO     | __main__:<module>:85 - 💰 Chiffre d'affaires total : 387,837.60 €
+2025-04-17 10:31:36.221 | INFO     | __main__:<module>:86 - 📦 Nombre de produits comptabilisés : 573
+2025-04-17 10:31:36.381 | SUCCESS  | __main__:<module>:97 - 📁 Fichiers CA exportés : CSV + Excel
+2025-04-17 10:45:07.348 | INFO     | __main__:<module>:23 - 🦆 Connexion à DuckDB établie.
+2025-04-17 10:45:07.363 | SUCCESS  | __main__:<module>:44 - ✅ Table ca_par_produit créée avec filtrage stock_quantity > 0 et stock_status = 'instock'.
+2025-04-17 10:45:07.365 | SUCCESS  | __main__:<module>:51 - ✅ Table ca_total créée.
+2025-04-17 10:45:07.366 | ERROR    | __main__:<module>:80 - ❌ Erreur finale du CA : CA total incorrect : 387837.6 € (attendu : 70 568.60 €)
+2025-04-17 10:52:48.829 | INFO     | __main__:<module>:23 - 🦆 Connexion à DuckDB établie.
+2025-04-17 10:52:48.849 | SUCCESS  | __main__:<module>:44 - ✅ Table ca_par_produit créée avec filtrage stock_quantity > 0 et stock_status = 'instock'.
+2025-04-17 10:52:48.849 | SUCCESS  | __main__:<module>:51 - ✅ Table ca_total créée.
+2025-04-17 10:52:48.849 | SUCCESS  | __main__:<module>:65 - 💰 CA TOTAL = 387,837.60 € ✅
+2025-04-17 10:52:48.849 | INFO     | __main__:<module>:67 - 📦 Produits comptabilisés : 573
+2025-04-17 10:52:49.069 | SUCCESS  | __main__:<module>:78 - 📁 Fichiers exportés : ca_par_produit.csv / .xlsx, ca_total.csv
+2025-04-17 10:55:48.667 | INFO     | __main__:<module>:23 - 🦆 Connexion à DuckDB établie.
+2025-04-17 10:55:48.683 | SUCCESS  | __main__:<module>:44 - ✅ Table ca_par_produit créée avec filtrage stock_quantity > 0 et stock_status = 'instock'.
+2025-04-17 10:55:48.683 | SUCCESS  | __main__:<module>:51 - ✅ Table ca_total créée.
+2025-04-17 10:55:48.683 | SUCCESS  | __main__:<module>:65 - 💰 CA TOTAL = 387,837.60 € ✅
+2025-04-17 10:55:48.683 | INFO     | __main__:<module>:67 - 📦 Produits comptabilisés : 573
+2025-04-17 10:55:48.843 | SUCCESS  | __main__:<module>:78 - 📁 Fichiers exportés : ca_par_produit.csv / .xlsx, ca_total.csv
+2025-04-17 10:55:48.857 | SUCCESS  | __main__:<module>:90 - 💰 CA TOTAL = 387,837.60 € ✅
+2025-04-17 10:55:48.857 | INFO     | __main__:<module>:91 - 📦 Produits comptabilisés : 573
+2025-04-17 10:55:48.860 | INFO     | __main__:<module>:113 - 📊 Moyenne du CA par produit : 676.85 €
+2025-04-17 10:55:48.860 | INFO     | __main__:<module>:114 - 📊 Médiane du CA par produit : 499.20 €
+2025-04-17 10:55:48.902 | SUCCESS  | __main__:<module>:120 - 📁 Fichiers exportés : ca_par_produit.csv / .xlsx, ca_total.csv
+2025-04-17 10:57:27.242 | INFO     | __main__:<module>:23 - 🦆 Connexion à DuckDB établie.
+2025-04-17 10:57:27.262 | SUCCESS  | __main__:<module>:44 - ✅ Table ca_par_produit créée avec filtrage stock_quantity > 0 et stock_status = 'instock'.
+2025-04-17 10:57:27.262 | SUCCESS  | __main__:<module>:51 - ✅ Table ca_total créée.
+2025-04-17 10:57:27.262 | SUCCESS  | __main__:<module>:65 - 💰 CA TOTAL = 387,837.60 € ✅
+2025-04-17 10:57:27.262 | INFO     | __main__:<module>:66 - 📦 Produits comptabilisés : 573
+2025-04-17 10:57:27.272 | INFO     | __main__:<module>:88 - 📊 Moyenne du CA par produit : 676.85 €
+2025-04-17 10:57:27.272 | INFO     | __main__:<module>:89 - 📊 Médiane du CA par produit : 499.20 €
+2025-04-17 10:57:27.472 | SUCCESS  | __main__:<module>:95 - 📁 Fichiers exportés : ca_par_produit.csv / .xlsx, ca_total.csv
+2025-04-17 11:01:14.884 | INFO     | __main__:<module>:32 - 🦆 Connexion à DuckDB établie.
+2025-04-17 11:01:14.898 | SUCCESS  | __main__:<module>:55 - ✅ Table ca_par_produit créée avec filtrage stock_quantity > 0 et stock_status='instock'.
+2025-04-17 11:01:14.901 | SUCCESS  | __main__:<module>:63 - ✅ Table ca_total créée.
+2025-04-17 11:01:14.903 | SUCCESS  | __main__:<module>:82 - 💰 CA TOTAL = 387,837.60 € ✅
+2025-04-17 11:01:14.904 | INFO     | __main__:<module>:83 - 📦 Produits comptabilisés : 573
+2025-04-17 11:01:14.906 | SUCCESS  | __main__:<module>:96 - 🧪 Tests de cohérence des données CA validés ✅
+2025-04-17 11:01:15.075 | SUCCESS  | __main__:<module>:114 - 📁 Fichiers exportés : ca_par_produit.csv / .xlsx, ca_total.csv
+2025-04-17 11:03:38.369 | INFO     | __main__:<module>:23 - 🦆 Connexion à DuckDB établie.
+2025-04-17 11:03:38.383 | SUCCESS  | __main__:<module>:44 - ✅ Table ca_par_produit créée avec filtrage stock_quantity > 0 et stock_status = 'instock'.
+2025-04-17 11:03:38.383 | SUCCESS  | __main__:<module>:51 - ✅ Table ca_total créée.
+2025-04-17 11:03:38.383 | SUCCESS  | __main__:<module>:66 - 💰 CA TOTAL = 387,837.60 € ✅
+2025-04-17 11:03:38.383 | INFO     | __main__:<module>:67 - 📦 Produits comptabilisés : 573
+2025-04-17 11:03:38.383 | SUCCESS  | __main__:<module>:73 - 🧪 Tests de cohérence des données CA validés ✅
+2025-04-17 11:03:38.383 | INFO     | __main__:<module>:91 - 📊 Moyenne du CA : 676.85 €
+2025-04-17 11:03:38.383 | INFO     | __main__:<module>:92 - 📊 Médiane du CA : 499.20 €
+2025-04-17 11:03:38.552 | SUCCESS  | __main__:<module>:98 - 📁 Fichiers exportés : ca_par_produit.csv / .xlsx, ca_total.csv
+2025-04-17 11:06:28.600 | INFO     | __main__:<module>:43 - 🦆 Connexion à DuckDB établie.
+2025-04-17 11:06:28.615 | SUCCESS  | __main__:<module>:67 - ✅ Table ca_par_produit créée avec filtrage stock_quantity > 0 et stock_status = 'instock'.
+2025-04-17 11:06:28.617 | SUCCESS  | __main__:<module>:75 - ✅ Table ca_total créée.
+2025-04-17 11:06:28.619 | SUCCESS  | __main__:<module>:94 - 💰 CA TOTAL = 387,837.60 € ✅
+2025-04-17 11:06:28.620 | INFO     | __main__:<module>:95 - 📦 Produits comptabilisés : 573
+2025-04-17 11:06:28.621 | SUCCESS  | __main__:<module>:101 - 🧪 Tests de cohérence des données CA validés ✅
+2025-04-17 11:06:28.631 | INFO     | __main__:<module>:124 - 📊 Moyenne du CA : 676.85 €
+2025-04-17 11:06:28.632 | INFO     | __main__:<module>:125 - 📊 Médiane du CA : 499.20 €
+2025-04-17 11:06:28.781 | SUCCESS  | __main__:<module>:132 - 📁 Fichiers exportés : ca_par_produit.csv / .xlsx, ca_total.csv
