@@ -21,7 +21,7 @@ logger.add(sys.stderr, level="WARNING")  # warnings, errors et criticals
 # - Crée le dossier de logs
 # - Ajoute un fichier de log avec rotation
 # ------------------------------------------------------------------------------
-LOGS_PATH = Path("data/logs")
+LOGS_PATH = Path("logs")
 LOGS_PATH.mkdir(parents=True, exist_ok=True)  # Crée le répertoire et parents sans erreur s'il existe
 # Fichier de log : niveau INFO, rotation tous les 500 KB
 logger.add(LOGS_PATH / "download_extract.log", level="INFO", rotation="500 KB")
