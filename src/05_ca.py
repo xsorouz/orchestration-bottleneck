@@ -16,6 +16,8 @@ from pathlib import Path
 # loguru : bibliothèque de logging moderne et élégante, utilisée pour journaliser chaque étape.
 from loguru import logger
 
+import sys
+
 logger.remove()
 logger.add(sys.stdout, level="INFO", filter=lambda record: record["level"].name == "INFO")
 logger.add(sys.stderr, level="WARNING")  # warnings, errors et criticals

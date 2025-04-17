@@ -16,6 +16,8 @@ from pathlib import Path
 # loguru : système de logging riche et lisible, utilisé pour tracer les étapes du rapport.
 from loguru import logger
 
+import sys
+
 logger.remove()
 logger.add(sys.stdout, level="INFO", filter=lambda record: record["level"].name == "INFO")
 logger.add(sys.stderr, level="WARNING")  # warnings, errors et criticals

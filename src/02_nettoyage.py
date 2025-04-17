@@ -8,6 +8,8 @@ import pandas as pd                  # Pandas pour l'analyse initiale des CSV
 from pathlib import Path             # Gestion portable des chemins
 from loguru import logger            # Logger riche en fonctionnalités
 
+import sys
+
 logger.remove()
 logger.add(sys.stdout, level="INFO", filter=lambda record: record["level"].name == "INFO")
 logger.add(sys.stderr, level="WARNING")  # warnings, errors et criticals
