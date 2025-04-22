@@ -1,10 +1,11 @@
-# === Script de test - Vérification des doublons (tables nettoyées) ===
+# === Script de test - Vérification de l'absence de doublons après dédoublonnage ===
 
 import duckdb
 from pathlib import Path
 from loguru import logger
 import sys
 
+# Logger
 logger.remove()
 logger.add(sys.stdout, level="INFO", filter=lambda record: record["level"].name == "INFO")
 logger.add(sys.stderr, level="WARNING")
@@ -21,21 +22,21 @@ except Exception as e:
 
 try:
     erp_dup = con.execute("""
-        SELECT COUNT(*) - COUNT(DISTINCT product_id) FROM erp_clean
+        SELECT COUNT(*) - COUNT(DISTINCT product_id) FROM erp_dedup
     """).fetchone()[0]
     web_dup = con.execute("""
-        SELECT COUNT(*) - COUNT(DISTINCT sku) FROM web_clean
+        SELECT COUNT(*) - COUNT(DISTINCT sku) FROM web_dedup
     """).fetchone()[0]
     liaison_dup = con.execute("""
-        SELECT COUNT(*) - COUNT(DISTINCT product_id) FROM liaison_clean
+        SELECT COUNT(*) - COUNT(DISTINCT product_id) FROM liaison_dedup
     """).fetchone()[0]
 
-    assert erp_dup == 0, f"❌ Doublons détectés dans erp_clean : {erp_dup}"
-    assert web_dup == 0, f"❌ Doublons détectés dans web_clean : {web_dup}"
-    assert liaison_dup == 0, f"❌ Doublons détectés dans liaison_clean : {liaison_dup}"
+    assert erp_dup == 0, f"❌ Doublons détectés dans erp_dedup : {erp_dup}"
+    assert web_dup == 0, f"❌ Doublons détectés dans web_dedup : {web_dup}"
+    assert liaison_dup == 0, f"❌ Doublons détectés dans liaison_dedup : {liaison_dup}"
 
-    logger.success("✅ Aucun doublon détecté dans les clés primaires.")
-    logger.success("🎉 Validation des doublons réussie.")
+    logger.success("✅ Aucun doublon détecté après dédoublonnage.")
+    logger.success("🎉 Validation post-dédoublonnage réussie.")
 
 except Exception as e:
     logger.error(f"❌ Erreur dans les tests de doublons : {e}")

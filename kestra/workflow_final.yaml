@@ -34,11 +34,11 @@ tasks:
           - python src/02_nettoyage.py
           - python tests/test_nettoyage.py
           - python tests/test_nulls.py
-          - python tests/test_doublons.py
-
+       
           # === Dédoublonnage + test ===
           - python src/03_dedoublonnage.py
           - python tests/test_dedoublonnage.py
+          - python tests/test_doublons.py
 
           # === Fusion + test ===
           - python src/04_fusion.py
