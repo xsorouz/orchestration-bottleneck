@@ -43,6 +43,7 @@ services:
       # Monte le socket Docker de l'hôte pour permettre à Kestra d'interagir avec Docker.
       - /tmp/kestra-wd:/tmp/kestra-wd  
       # Monte un répertoire temporaire pour les fichiers de travail (working directory) de Kestra.
+      - F:/1.Boulot/03_Github/orchestration-bottleneck/data/outputs:/mnt/outputs
     environment:
       # Configure Kestra via une variable d'environnement multi-lignes.
       KESTRA_CONFIGURATION: |

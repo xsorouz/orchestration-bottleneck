@@ -1,0 +1,83 @@
+id: bottleneck_pipeline_v2
+namespace: bottleneck.project
+
+description: >
+  Pipeline complet du projet P10 – Exécution des scripts 00 à 07
+  dans un environnement Docker unique, avec suivi des logs et fichiers générés.
+
+tasks:
+  - id: bloc_unique_execution_pipeline
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+
+    retry:
+      type: constant
+      maxAttempt: 2         # ➕ 1 tentative initiale + 2 retries = 3 au total
+      interval: PT2M        # ➖ 2 minutes entre les tentatives
+
+    tasks:
+      # === 1. Clonage du dépôt Git contenant les scripts Python ===
+      - id: clonage_du_projet
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/xsorouz/orchestration-bottleneck.git
+        branch: main
+
+      # === 2. Exécution de tous les scripts Python dans l’ordre ===
+      - id: execution_pipeline_complet
+        type: io.kestra.plugin.scripts.python.Commands
+
+        retry:
+          type: constant
+          maxAttempt: 3     # ➕ 1 tentative initiale + 3 retries = 4 au total
+          interval: PT1M    # ➖ 1 minute entre les tentatives
+
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+
+        commands:
+          - python src/00_download_and_extract.py
+          - python src/01_excel_to_csv.py
+
+          - python src/02_nettoyage.py
+          - python tests/test_nettoyage.py
+          - python tests/test_nulls.py
+
+          - python src/03_dedoublonnage.py
+          - python tests/test_dedoublonnage.py
+          - python tests/test_doublons.py
+
+          - python src/04_fusion.py
+          - python tests/test_fusion.py
+
+          - python src/05_ca.py
+          - python tests/test_ca.py
+
+          - python src/06_zscore.py
+          - python tests/test_zscore.py
+
+          - python src/07_log_rapport.py
+
+        outputFiles:
+          - logs/download_extract.log
+          - logs/conversion.log
+          - logs/nettoyage.log
+          - logs/dedoublonnage.log
+          - logs/fusion.log
+          - logs/ca.log
+          - logs/zscore.log
+          - logs/rapport.log
+          - data/raw/erp.csv
+          - data/raw/web.csv
+          - data/raw/liaison.csv
+          - data/outputs/fusion.csv
+          - data/outputs/ca_par_produit.csv
+          - data/outputs/ca_par_produit.xlsx
+          - data/outputs/ca_total.csv
+          - data/outputs/vins_millesimes.csv
+          - data/outputs/vins_ordinaires.csv
+          - data/outputs/resume_stats.csv
+          - data/outputs/erp_exclu.csv
+          - data/outputs/liaison_exclu.csv
+
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: ghcr.io/kestra-io/pydata:latest

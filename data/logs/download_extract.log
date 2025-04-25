@@ -1,7 +1,0 @@
-2025-04-17 15:27:07.414 | INFO     | __main__:<module>:42 - 📦 Téléchargement de l’archive en cours...
-2025-04-17 15:27:07.853 | SUCCESS  | __main__:<module>:50 - ✅ Archive téléchargée avec succès.
-2025-04-17 15:27:07.870 | SUCCESS  | __main__:<module>:62 - ✅ Archive extraite dans : /app/data/raw/bottleneck
-2025-04-17 15:27:07.872 | SUCCESS  | __main__:<module>:85 - ✅ Tous les fichiers Excel attendus sont présents :
-2025-04-17 15:27:07.872 | INFO     | __main__:<module>:87 -    - bottleneck/Fichier_erp.xlsx
-2025-04-17 15:27:07.873 | INFO     | __main__:<module>:87 -    - bottleneck/Fichier_web.xlsx
-2025-04-17 15:27:07.873 | INFO     | __main__:<module>:87 -    - bottleneck/fichier_liaison.xlsx
