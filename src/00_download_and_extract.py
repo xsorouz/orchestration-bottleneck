@@ -35,7 +35,7 @@ ZIP_URL = (
 )
 
 RAW_PATH = Path("data/raw")
-EXTRACTED_PATH = RAW_PATH / "bottleneck"
+EXTRACTED_PATH = RAW_PATH 
 
 RAW_PATH.mkdir(parents=True, exist_ok=True)
 
