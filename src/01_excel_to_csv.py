@@ -27,7 +27,6 @@ logger.add(LOGS_PATH / "conversion_excel_csv.log", level="INFO", rotation="500 K
 EXTRACTED_PATH = Path("data/raw/bottleneck")  # Dossier contenant les fichiers Excel extraits
 CSV_OUTPUT_PATH = Path("data/raw")             # Destination des fichiers CSV
 
-EXTRACTED_PATH.mkdir(parents=True, exist_ok=True)
 CSV_OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
 # ----------------------------------------------------------------------
