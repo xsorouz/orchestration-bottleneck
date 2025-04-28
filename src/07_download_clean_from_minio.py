@@ -1,4 +1,4 @@
-# === Script 08 - Téléchargement des fichiers nettoyés depuis MinIO ===
+# === Script 07 - Téléchargement des fichiers nettoyés depuis MinIO ===
 # Ce script télécharge les fichiers nettoyés ('erp_clean.csv', 'web_clean.csv', 'liaison_clean.csv')
 # depuis le bucket MinIO sous 'data/outputs/' et les enregistre localement dans 'data/outputs/'.
 
