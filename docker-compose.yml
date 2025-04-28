@@ -1,85 +1,98 @@
-version: '3.8'
+version: "3.8"
 
 # ========================
-# Volumes persistants
+# Définition des volumes persistants
 # ========================
 volumes:
-  postgres-data:       # Volume pour les données PostgreSQL
+  postgres-data:
     driver: local
-
-  kestra-data:         # Volume pour le stockage interne de Kestra
+  kestra-data:
     driver: local
-
-  kestra-outputs:      # Volume pour les fichiers de sortie de Kestra
+  minio-data:
     driver: local
 
 # ========================
-# Services
+# Définition des services (containers) à déployer
 # ========================
 services:
-
-  # ------------------------
-  # Base de données PostgreSQL
-  # ------------------------
   postgres:
-    image: postgres:15
+    image: postgres
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: kestra
       POSTGRES_USER: kestra
-      POSTGRES_PASSWORD: kestra
+      POSTGRES_PASSWORD: k3str4
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kestra"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
 
-  # ------------------------
-  # Serveur principal Kestra
-  # ------------------------
-  kestra:
-    image: kestra/kestra:0.15.0  # Version stable
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --address ":9000" --console-address ":9001"
     restart: unless-stopped
-    user: root                   # Permet l'accès aux chemins montés en lecture/écriture
-    command: server standalone
-    depends_on:
-      postgres:
-        condition: service_healthy
-
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     volumes:
-      - kestra-data:/app/storage                        # Stockage interne Kestra
-      - kestra-outputs:/mnt/outputs                     # Dossier de sortie Kestra
-      - /var/run/docker.sock:/var/run/docker.sock       # Nécessaire pour lancer des conteneurs via Kestra
-      - ./workflows:/app/workflows                      # Workflows locaux (YAML)
-      - /mnt/f/1.Boulot/03_Github/orchestration-bottleneck:/mnt/orchestration  # Accès aux fichiers locaux sur F:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: AKIAIOSFODNN7EXAMPLE
+      MINIO_ROOT_PASSWORD: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 
+  kestra:
+    image: kestra/kestra:latest
+    pull_policy: always
+    restart: unless-stopped
+    user: "root"
+    command: server standalone
+    volumes:
+      - kestra-data:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra-wd:/tmp/kestra-wd
+      - F:/1.Boulot/03_Github/orchestration-bottleneck/data/outputs:/mnt/outputs
     environment:
       KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/kestra
+            driverClassName: org.postgresql.Driver
+            username: kestra
+            password: k3str4
         kestra:
           server:
             basicAuth:
-              enabled: false  # Authentification désactivée pour dev
+              enabled: false
+              username: "admin@example.com"
+              password: kestra
           repository:
             type: postgres
           storage:
-            type: local
-            local:
-              basePath: "/app/storage"
+            type: s3
+            s3:
+              endpoint: http://minio:9000
+              region: us-east-1
+              bucket: mon-bucket
+              accessKey: AKIAIOSFODNN7EXAMPLE
+              secretKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+              forcePathStyle: true
           queue:
             type: postgres
-
+          tasks:
+            tmpDir:
+              path: /tmp/kestra-wd/tmp
+          url: http://localhost:8080/
+      KESTRA_PLUGINS: |
+        - io.kestra.plugin.scripts.exec
     ports:
-      - "8080:8080"  # Interface web
-      - "8081:8081"  # API REST
-
-  # ------------------------
-  # Explorateur de fichiers optionnel
-  # ------------------------
-  filebrowser:
-    image: filebrowser/filebrowser
-    volumes:
-      - kestra-outputs:/srv
-    ports:
-      - "8082:80"    # Interface Filebrowser
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_started
+      minio:
+        condition: service_started

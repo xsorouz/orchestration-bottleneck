@@ -1,0 +1,208 @@
+id: bottleneck_pipeline_v3
+namespace: bottleneck.project
+
+description: |
+  Pipeline P10 – Scripts 00 à 07 exécutés séparément sans dépendances, avec logs, outputs, et export automatique dans un répertoire partagé Docker.
+
+tasks:
+  - id: bloc_unique_execution_pipeline
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    retry:
+      type: constant
+      maxAttempt: 2
+      interval: PT2M
+    tasks:
+      - id: clone_repo
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/xsorouz/orchestration-bottleneck.git
+        branch: main
+
+      - id: step_00_download
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python src/00_download_and_extract.py
+        outputFiles:
+          - data/raw/erp.csv
+          - data/raw/web.csv
+          - data/raw/liaison.csv
+          - logs/download_extract.log
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+          volumes:
+            - /mnt/outputs:/mnt/outputs
+
+      - id: step_01_excel_to_csv
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python src/01_excel_to_csv.py
+        outputFiles:
+          - logs/conversion.log
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+          volumes:
+            - /mnt/outputs:/mnt/outputs
+
+      - id: step_02_cleaning
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python src/02_nettoyage.py
+        outputFiles:
+          - logs/nettoyage.log
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+          volumes:
+            - /mnt/outputs:/mnt/outputs
+
+      - id: test_cleaning
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python tests/test_nettoyage.py
+          - python tests/test_nulls.py
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+
+      - id: step_03_deduplication
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python src/03_dedoublonnage.py
+        outputFiles:
+          - logs/dedoublonnage.log
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+          volumes:
+            - /mnt/outputs:/mnt/outputs
+
+      - id: test_deduplication
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python tests/test_dedoublonnage.py
+          - python tests/test_doublons.py
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+
+      - id: step_04_fusion
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python src/04_fusion.py
+        outputFiles:
+          - data/outputs/fusion.csv
+          - logs/fusion.log
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+          volumes:
+            - /mnt/outputs:/mnt/outputs
+
+      - id: test_fusion
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python tests/test_fusion.py
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+
+      - id: step_05_ca
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python src/05_ca.py
+        outputFiles:
+          - data/outputs/ca_par_produit.csv
+          - data/outputs/ca_par_produit.xlsx
+          - data/outputs/ca_total.csv
+          - logs/ca.log
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+          volumes:
+            - /mnt/outputs:/mnt/outputs
+
+      - id: test_ca
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python tests/test_ca.py
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+
+      - id: step_06_zscore
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python src/06_zscore.py
+        outputFiles:
+          - data/outputs/vins_millesimes.csv
+          - data/outputs/vins_ordinaires.csv
+          - logs/zscore.log
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+          volumes:
+            - /mnt/outputs:/mnt/outputs
+
+      - id: test_zscore
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python tests/test_zscore.py
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+
+      - id: step_07_final_report
+        type: io.kestra.plugin.scripts.python.Commands
+        beforeCommands:
+          - pip install loguru requests pandas openpyxl duckdb
+        commands:
+          - python src/07_log_rapport.py
+        outputFiles:
+          - data/outputs/resume_stats.csv
+          - data/outputs/erp_exclu.csv
+          - data/outputs/liaison_exclu.csv
+          - logs/rapport.log
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+          volumes:
+            - /mnt/outputs:/mnt/outputs
+
+      - id: copy_outputs
+        type: io.kestra.plugin.scripts.shell.Commands
+        commands:
+          - mkdir -p /mnt/outputs
+          - cp -r data/outputs/* /mnt/outputs/ || echo "⚠️ Aucun fichier outputs à copier"
+          - cp -r logs/* /mnt/outputs/ || echo "⚠️ Aucun log à copier"
+          - echo "✅ Fichiers copiés dans /mnt/outputs (partage Windows)"
+          - ls -la /mnt/outputs  # Pour vérifier le contenu du répertoire
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          containerImage: ghcr.io/kestra-io/pydata:latest
+          volumes:
+            - /mnt/outputs:/mnt/outputs
