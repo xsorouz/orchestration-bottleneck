@@ -76,7 +76,7 @@ services:
             s3:
               endpoint: http://minio:9000
               region: us-east-1
-              bucket: mon-bucket
+              bucket: bottleneck
               accessKey: AKIAIOSFODNN7EXAMPLE
               secretKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
               forcePathStyle: true
