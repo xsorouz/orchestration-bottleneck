@@ -18,7 +18,7 @@ logger.remove()
 logger.add(sys.stdout, level="INFO", filter=lambda record: record["level"].name == "INFO")
 logger.add(sys.stderr, level="WARNING")
 
-LOGS_PATH = Path("logs")
+LOGS_PATH = Path("./logs")
 LOGS_PATH.mkdir(parents=True, exist_ok=True)
 logger.add(LOGS_PATH / "upload_minio.log", level="INFO", rotation="500 KB")
 
@@ -60,7 +60,7 @@ except ClientError as e:
 # ----------------------------------------------------------------------
 # Liste des fichiers locaux à uploader
 # ----------------------------------------------------------------------
-CSV_PATH = Path("data/raw")
+CSV_PATH = Path("./data/raw")
 files_to_upload = ["erp.csv", "web.csv", "liaison.csv"]
 
 # ----------------------------------------------------------------------
