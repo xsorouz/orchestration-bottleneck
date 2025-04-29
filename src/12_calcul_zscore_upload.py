@@ -78,7 +78,7 @@ except Exception as e:
 # ----------------------------------------------------------------------
 # Connexion MinIO et upload
 # ----------------------------------------------------------------------
-MINIO_ENDPOINT = "http://minio:9000"
+MINIO_ENDPOINT = "http://host.docker.internal:9000"
 ACCESS_KEY = "AKIAIOSFODNN7EXAMPLE"
 SECRET_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 BUCKET_NAME = "bottleneck"
