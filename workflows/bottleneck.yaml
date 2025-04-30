@@ -1,0 +1,281 @@
+# ========================================================
+# 🎯 Workflow d'automatisation des traitements BottleNeck
+# ========================================================
+
+id: pipeline-bottleneck_v2
+namespace: bottleneck
+description: >
+  Workflow complet BottleNeck : téléchargement, transformation, validation,
+  calculs analytiques, export final. Planifié chaque 15 du mois à 9h00.
+
+# ============================================================
+# 📅 Déclencheur mensuel
+# ============================================================
+triggers:
+  - id: planification-mensuelle
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 15 * *"
+
+# ============================================================
+# 🛠️ Pipeline de tâches
+# ============================================================
+tasks:
+  - id: repertoire-travail
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    retry:
+      type: constant
+      maxAttempt: 2
+      interval: PT2M
+    tasks:
+
+      # 📥 Clonage du dépôt
+      - id: clonage-depot
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/xsorouz/orchestration-bottleneck.git
+        branch: main
+
+      # 📥 Vérification des fichiers clonés
+      - id: verifier-fichiers
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        commands:
+          - ls -R
+
+      # 📦 Téléchargement des données brutes
+      - id: telechargement-donnees
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install requests loguru
+        commands:
+          - python src/00_download_and_extract.py
+
+      # 📄 Conversion Excel -> CSV
+      - id: conversion-excel-csv
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install pandas openpyxl loguru
+        commands:
+          - python src/01_excel_to_csv.py
+
+      # ☁️ Upload CSV bruts vers MinIO
+      - id: upload-csv-bruts
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install boto3 loguru
+        commands:
+          - python src/02_upload_to_minio.py
+
+      # ✅ Vérification de l'upload brut
+      - id: verification-upload-brut
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install boto3 loguru
+        commands:
+          - python src/03_verify_upload.py
+
+      # 🧹 Nettoyage des données
+      - id: nettoyage-donnees
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb pandas loguru
+        commands:
+          - python src/05_clean_data.py
+
+      # 🔍 Tests de validation du nettoyage
+      - id: tests-nettoyage
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb loguru
+        commands:
+          - python tests/test_05_clean_data.py
+          - python tests/test_05_nulls_clean_data.py
+
+      # ☁️ Upload des fichiers nettoyés
+      - id: upload-csv-nettoyes
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install boto3 loguru
+        commands:
+          - python src/06_upload_clean_to_minio.py
+
+      # 🗂️ Dédoublonnage des données
+      - id: dedoublonnage-donnees
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb pandas numpy loguru
+        commands:
+          - python src/08_dedoublonnage.py
+
+      # 🔍 Tests de validation du dédoublonnage
+      - id: tests-dedoublonnage
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb pandas numpy loguru
+        commands:
+          - python tests/test_08_dedoublonnage.py
+          - python tests/test_08_doublons.py
+
+      # 🔗 Fusion des données
+      - id: fusion-donnees
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb pandas numpy loguru
+        commands:
+          - python src/09_fusion.py
+
+      # 🔍 Tests de validation de la fusion
+      - id: tests-fusion
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb pandas numpy loguru
+        commands:
+          - python tests/test_09_fusion.py
+
+      # 💾 Création snapshot base
+      - id: snapshot-base
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb pandas numpy loguru
+        commands:
+          - python src/10_create_snapshot.py
+
+      # 💰 Calcul du chiffre d'affaires
+      - id: calcul-chiffre-affaires
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb pandas numpy boto3 loguru openpyxl
+        commands:
+          - python src/11_calcul_ca.py
+
+      # 🔍 Tests de validation du chiffre d'affaires
+      - id: tests-chiffre-affaires
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb pandas numpy loguru
+        commands:
+          - python tests/test_11_validate_ca.py
+
+      # 🍷 Calcul du Z-score
+      - id: calcul-zscore
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb pandas numpy boto3 loguru
+        commands:
+          - python src/12_calcul_zscore_upload.py
+
+      # 🔍 Tests de validation du Z-score
+      - id: tests-zscore
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install pandas numpy loguru
+        commands:
+          - python tests/test_12_validate_zscore.py
+
+      # 📋 Génération du rapport final
+      - id: generation-rapport-final
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install duckdb pandas numpy boto3 loguru openpyxl
+        commands:
+          - python src/13_generate_final_report.py
+
+      - id: upload-logs-final
+        type: io.kestra.plugin.scripts.python.Commands
+        namespaceFiles:
+          enabled: true
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:slim
+        beforeCommands:
+          - pip install boto3 loguru
+        commands:
+          - python src/14_upload_all_logs.py          
