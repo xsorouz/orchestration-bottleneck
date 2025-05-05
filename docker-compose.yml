@@ -1,57 +1,73 @@
 version: "3.8"
 
 # ============================================================================
-# 🛠️ Définition des volumes persistants
+# 📦 Volumes persistants
 # ============================================================================
 volumes:
-  postgres-data:
-    driver: local    # Volume pour la base PostgreSQL
-  kestra-data:
-    driver: local    # Volume pour le stockage interne de Kestra
-  minio-data:
-    driver: local    # Volume pour les données stockées dans MinIO
+  postgres-data:   # Volume pour PostgreSQL (métadonnées Kestra)
+  kestra-data:     # Volume pour le stockage interne de Kestra
+  minio-data:      # Volume pour les objets stockés dans MinIO
 
 # ============================================================================
-# 🚀 Définition des services à déployer
+# 🌐 Réseau interne
+# ============================================================================
+networks:
+  hybrid_net:
+    driver: bridge
+
+# ============================================================================
+# 🚀 Définition des services
 # ============================================================================
 services:
 
   # --------------------------------------------------------------------------
-  # 📦 PostgreSQL — Base de données pour Kestra
+  # 🗄️ PostgreSQL — Base de données utilisée par Kestra
   # --------------------------------------------------------------------------
   postgres:
+    container_name: postgres-kestra
     image: postgres
     restart: unless-stopped
+
     volumes:
       - postgres-data:/var/lib/postgresql/data
+
     environment:
       POSTGRES_DB: kestra
       POSTGRES_USER: kestra
       POSTGRES_PASSWORD: k3str4
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER"]
       interval: 30s
       timeout: 10s
       retries: 10
+
     networks:
       - hybrid_net
 
   # --------------------------------------------------------------------------
-  # ☁️ MinIO — Serveur de stockage compatible S3
+  # ☁️ MinIO — Serveur de stockage objet compatible S3
   # --------------------------------------------------------------------------
   minio:
+    container_name: minio-kestra
     image: minio/minio:latest
-    container_name: minio
-    command: server /data --address ":9000" --console-address ":9001"
     restart: unless-stopped
+
+    # Lance le serveur MinIO avec API sur le port 9000 et console sur 9001
+    command: server /data --address ":9000" --console-address ":9001"
+
     ports:
-      - "9000:9000"    # Port API S3
-      - "9001:9001"    # Port Console WebUI MinIO
+      - "9000:9000"   # API S3
+      - "9001:9001"   # Console Web (http://localhost:9001)
+
     volumes:
       - minio-data:/data
+
     environment:
+      # 👇 Identifiants codés en dur pour correspondre aux scripts Python
       MINIO_ROOT_USER: AKIAIOSFODNN7EXAMPLE
       MINIO_ROOT_PASSWORD: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
     networks:
       - hybrid_net
 
@@ -59,19 +75,26 @@ services:
   # ⚙️ Kestra — Orchestrateur de workflows
   # --------------------------------------------------------------------------
   kestra:
+    container_name: kestra
     image: kestra/kestra:latest
     pull_policy: always
     restart: unless-stopped
-    user: "root"        # Important pour accéder au Docker socket
+    user: "root"
     command: server standalone
+
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+
     volumes:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/kestra-wd:/tmp/kestra-wd
 
-    ports:
-      - "8080:8080"     # Interface Web Kestra
-      - "8081:8081"     # API interne Kestra
+      # 🔽 Répertoires de scripts montés dans le conteneur
+      - ./src:/app/project/src
+      - ./tests:/app/project/tests
+
     environment:
       KESTRA_CONFIGURATION: |
         datasources:
@@ -80,14 +103,17 @@ services:
             driverClassName: org.postgresql.Driver
             username: kestra
             password: k3str4
+
         kestra:
           server:
             basicAuth:
               enabled: false
               username: "admin@example.com"
               password: kestra
+
           repository:
             type: postgres
+
           storage:
             type: s3
             s3:
@@ -97,32 +123,24 @@ services:
               accessKey: AKIAIOSFODNN7EXAMPLE
               secretKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
               forcePathStyle: true
+
           queue:
             type: postgres
+
           tasks:
             tmpDir:
               path: /tmp/kestra-wd/tmp
+
           url: http://localhost:8080/
+
       KESTRA_PLUGINS: |
         - io.kestra.plugin.scripts.exec
+
     depends_on:
       postgres:
         condition: service_started
       minio:
         condition: service_started
+
     networks:
       - hybrid_net
-
-# ============================================================================
-# 🌐 Définition du réseau commun
-# ============================================================================
-networks:
-  hybrid_net:
-    driver: bridge
-
-# ============================================================================
-# 📋 Remarques importantes
-# ============================================================================
-# - Tous les services communiquent via le réseau "hybrid_net"
-# - Kestra utilise MinIO comme stockage principal
-# - Ports exposés localement pour accès web (MinIO :9001, Kestra :8080)
