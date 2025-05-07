@@ -26,7 +26,7 @@ logger.add(LOGS_PATH / "upload_minio.log", level="INFO", rotation="500 KB")
 # ==============================================================================
 # Paramètres MinIO
 # ==============================================================================
-MINIO_ENDPOINT = "http://host.docker.internal:9000"
+MINIO_ENDPOINT = "http://host.docker.internal:9000" # "http://minio:9000" 
 ACCESS_KEY = "AKIAIOSFODNN7EXAMPLE"
 SECRET_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 BUCKET_NAME = "bottleneck"
